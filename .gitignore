@@ -20,3 +20,6 @@ src/*.native
 # ArchEx files
 *.json
 *.pickle
+
+v8.2/
+v8.3/
