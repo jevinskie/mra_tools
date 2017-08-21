@@ -12,6 +12,11 @@ arch.tag
 *.un~
 *.swo
 
+# Python files
+*.pyc
+.idea/
+*/__pycache__/
+
 # OCaml files
 src/_build
 src/*.byte
