@@ -122,8 +122,11 @@ class Encoding(object):
             inst_int = swap_endian(inst_int, 4)
 
         if self.bitmask() & inst_int == self.bitpattern():
-            if self.ne_bitmask() != 0 and self.ne_bitmask() & inst_int != self.ne_bitpattern():
-                return True
+            if self.ne_bitmask() != 0:
+                if self.ne_bitmask() & inst_int != self.ne_bitpattern():
+                    return True
+                else:
+                    return False
             return True
         else:
             return False
