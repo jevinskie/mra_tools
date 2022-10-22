@@ -4,10 +4,7 @@
 Unpack ARM instruction XML files extracting the encoding information.
 Pickle it.
 '''
-from __future__ import print_function
 
-from builtins import str
-from builtins import object
 import argparse
 import glob
 import itertools
@@ -174,7 +171,7 @@ def getInstrs(dirs, arches, verbose_level):
 
             if encodings != []:  # discard encodings from unwanted InsnSets
                 encs = tuple([e for e in instr.encs if e[1] in encodings])
-                if encs == []:
+                if not len(encs):
                     if verbose_level > 1: print('Discarding', instr.name, encodings)
                     continue
                 instr.encs = encs
@@ -197,9 +194,9 @@ def main():
     parser.add_argument('--verbose', '-v', help='Use verbose output',
                         action='count', default=0)
     parser.add_argument('dir', metavar='<dir>', nargs='*',
-                        default=['v8.3/ISA_v83A_AArch32_xml_00bet4'], help='input directories')
+                        default=['v8.3/ISA_v83A_AArch32_xml_00bet4', 'v8.3/ISA_v83A_A64_xml_00bet4'], help='input directories')
     parser.add_argument('--arch', help='Optional list of architecture states to extract',
-                        choices=['AArch32', 'AArch64'], default=['AArch32'], action='append')
+                        choices=['AArch32', 'AArch64'], action='append')
     parser.add_argument('--output',  '-o', help='File to store pickled encodings',
                         metavar='FILE', default=instr_dill_path)
     args = parser.parse_args()
@@ -212,8 +209,6 @@ def main():
     with open(args.output, 'wb') as outfile:
         pickle.dump(g_instrs_enc_objs, outfile, protocol=2)
 
-    return
-
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()
