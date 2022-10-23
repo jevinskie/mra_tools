@@ -73,6 +73,7 @@ Read pseudocode to extract an ASL name.
 
 def readASLName(ps):
     name = ps.attrib['name']
+    print(name)
     name = name.replace('.txt', '')
     name = name.replace('/instrs', '')
     name = name.replace('/Op_', '/')
@@ -115,7 +116,7 @@ def readInstruction(xml):
             if m:
                 nm = m.group(1)
                 split = True
-                if fields[-1][3] and fields[-1][2] == nm:
+                if len(fields) and fields[-1][3] and fields[-1][2] == nm:
                     (hi1, lo1, _, _, c1) = fields.pop()
                     assert (lo1 == hi + 1)  # must be adjacent
                     hi = hi1
@@ -194,7 +195,7 @@ def main():
     parser.add_argument('--verbose', '-v', help='Use verbose output',
                         action='count', default=0)
     parser.add_argument('dir', metavar='<dir>', nargs='*',
-                        default=['v8.3/ISA_v83A_A64_xml_00bet4'], help='input directories')
+                        default=['v8.6/ISA_A64_xml_v86A-2019-12'], help='input directories')
     parser.add_argument('--arch', help='Optional list of architecture states to extract',
                         choices=['AArch32', 'AArch64'], action='append')
     parser.add_argument('--output',  '-o', help='File to store pickled encodings',
