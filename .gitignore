@@ -11,6 +11,7 @@ arch.tag
 *.swp
 *.un~
 *.swo
+<<<<<<< HEAD
 
 # Python files
 *.pyc

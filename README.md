@@ -9,49 +9,59 @@ innards of these tools and see [blog
 post](https://alastairreid.github.io/ARM-v8a-xml-release/) for some ideas
 on what can be done with the specification once it has been unpacked.
 
+
 ## Usage
 
 The following commands will download ARM's specification and unpack it.
 
-    mkdir -p v8.3
-    cd v8.3
+    mkdir -p v8.6
+    cd v8.6
 
-    wget https://developer.arm.com/-/media/developer/products/architecture/armv8-a-architecture/A64_v83A_ISA_xml_00bet4.tar.gz
-    wget https://developer.arm.com/-/media/developer/products/architecture/armv8-a-architecture/AArch32_v83A_ISA_xml_00bet4.tar.gz
-    wget https://developer.arm.com/-/media/developer/products/architecture/armv8-a-architecture/ARMv83A-SysReg-00bet4.tar.gz
+    wget https://developer.arm.com/-/media/developer/products/architecture/armv8-a-architecture/2019-12/SysReg_xml_v86A-2019-12.tar.gz
+    wget https://developer.arm.com/-/media/developer/products/architecture/armv8-a-architecture/2019-12/A64_ISA_xml_v86A-2019-12.tar.gz
+    wget https://developer.arm.com/-/media/developer/products/architecture/armv8-a-architecture/2019-12/AArch32_ISA_xml_v86A-2019-12.tar.gz
 
-    tar zxf A64_v83a_ISA_xml_00bet4.tar.gz
-    tar zxf AArch32_v83A_ISA_xml_00bet4.tar.gz
-    tar zxf ARMv83A-SysReg-00bet4.tar.gz
-
-    tar zxf ISA_v83A_A64_xml_00bet4.tar.gz
-    tar zxf ISA_v83A_AArch32_xml_00bet4.tar.gz
-    tar zxf SysReg_v83A_xml-00bet4.tar.gz
+    tar zxf A64_ISA_xml_v86A-2019-12.tar.gz
+    tar zxf AArch32_ISA_xml_v86A-2019-12.tar.gz
+    tar zxf SysReg_xml_v86A-2019-12.tar.gz
 
     cd ..
 
     make all
-    # python3 bin/reg2asl.py v8.2/SysReg_v82A_xml-00bet3.2 -o regs.asl
-    # python3 bin/instrs2asl.py v8.2/ISA_v82A_AArch32_xml_00bet3.2 v8.2/ISA_v82A_A64_xml_00bet3.2
+
+You may need to manually add function prototypes for these functions to arch.asl
+
+    bits(4) _MemTag[AddressDescriptor desc]
+    _MemTag[AddressDescriptor desc] = bits(4) value;
 
 Generates:
 
 - arch.asl: all the ASL support code
+  (This file uses an alternative syntax for bitslices that is easier to parse.
+  Remove the --altslicesyntax flag from the Makefile to get the original ASL.)
 - arch.tag: all the instruction encodings and decode/execute ASL
+- arch_instrs.tag: all the instruction encodings and decode/execute ASL
+  (alternate format)
+- arch_decode.tag: instruction decode trees in ASL
 - regs.asl: type of each system register
 
-Various subsets of the architecture can be generated using these additional flags
+You can also extract various subsets of the full architecture specification.
+For example, if you want a subset of the usermode AArch64 instructions, you can
+use the following command.
 
-    --arch=AArch32
-    --arch=AArch64
-    --arch=AArch32 --arch=AArch64
+    make FILTER=--filter=usermode.json all
+
+The subset selected may not contain all the instructions you would want --- see
+[Subsetting](#subsetting) for more details.
+
 
 ## Help
 
     $ bin/instrs2asl.py  -h
-    usage: instrs2asl.py [-h] [--verbose] [--tag FILE] [--asl FILE]
-			 [--arch {AArch32,AArch64}]
-			 <dir> [<dir> ...]
+    usage: instrs2asl.py [-h] [--verbose] [--altslicesyntax] [--demangle]
+                         [--output FILE] [--filter [FILE [FILE ...]]]
+                         [--arch {AArch32,AArch64}]
+                         <dir> [<dir> ...]
 
     Unpack ARM instruction XML files extracting the encoding information and ASL
     code within it.
@@ -62,10 +72,111 @@ Various subsets of the architecture can be generated using these additional flag
     optional arguments:
       -h, --help            show this help message and exit
       --verbose, -v         Use verbose output
-      --tag FILE            Output tag file for instructions
-      --asl FILE            Output asl file for support code
+      --altslicesyntax      Convert to alternative slice syntax
+      --demangle            Demangle instruction ASL
+      --output FILE, -o FILE
+                            Basename for output files
+      --filter [FILE [FILE ...]]
+                            Optional input json file to filter definitions
       --arch {AArch32,AArch64}
-			    Optional list of architecture states to extract
+                            Optional list of architecture states to extract
+
+
+## Subsetting
+
+Various subsets of the architecture can be generated using these additional flags
+
+    --arch=AArch32
+    --arch=AArch64
+    --arch=AArch32 --arch=AArch64
+
+For finer control, you can specify a specific filter that selects exactly which
+instructions and subset of the call graph to include
+
+    make FILTER=--filter=usermode.json all
+
+The filter is controlled by a json file that has this format:
+
+    {
+        "instructions": [
+            // regexp list goes here
+        ],
+        "roots": [
+            // root definitions go here
+        ],
+        "cuts": [
+            // cut functions go here
+        ],
+        "canaries": [
+            // canary definitions go here
+        ]
+    }
+
+The four parts of this are:
+
+- 'instructions' and 'roots' define what you want to include
+
+    - 'instructions' is a list of regexps that match instruction names
+      For example "aarch64/branch/conditional/.*".
+      You can find the list of instruction names by looking in the file
+      arch.tag.
+
+          grep TAG arch.tag | grep decode
+
+    - 'roots' is a list of functions that you wish to keep even though they are
+      not referred to by instructions.  For example, after executing an
+      instruction in Thumb mode, you should call "AArch32.ITAdvance()" (which
+      has 0 arguments) so add "AArch32.ITAdvance.0" to the list of roots.  The
+      ".0" suffix indicates that the function has 0 arguments.
+
+- 'cuts' defines what you want to exclude.
+
+    This should be a list of functions
+    that you wish to provide your own implementations for.   For example, if all
+    you are interested in is usermode execution, you might want to omit all the
+    code to implement page table lookups and replace the functions to read or
+    write memory by adding the following to the cut list
+
+        "AArch64.MemSingle.read.4",
+        "AArch64.MemSingle.write.4",
+
+    This will cause the definitions of these functions to be replaced by
+    function prototypes.
+
+    Choosing the right set of cuts will depend on what functionality from the
+    part you extract and on what you want to implement in your
+    analysis/simulation framework.
+
+- 'canaries' are optional but are useful when trying to understand why your
+    'cuts' are not behaving as intended.
+
+    Any uncut path from the instructions or roots to a canary is reported.
+
+    For example, if you are trying to eliminate as much of the AArch32 support
+    as possible, you might want to omit the function "ELUsingAArch32.1".
+    But there are many possible code paths to that function and it is hard
+    to find which functions to cut.  So add "ELUsingAArch32.1" to the list of
+    canaries and you will get a report that looks a bit like this:
+
+        Canary ELUsingAArch32.1 ELIsInHost.1 IsInHost.0 AArch64.TakeException.4 AArch64.UndefinedFault.0
+        Canary ELUsingAArch32.1 ELIsInHost.1 S1TranslationRegime.0 ESR[ AArch64.ReportException.2 AArch64.TakeException.4 AArch64.UndefinedFault.0
+        Canary ELUsingAArch32.1 ELIsInHost.1 S1TranslationRegime.0 AArch64.ReportException.2 AArch64.TakeException.4 AArch64.UndefinedFault.0
+        ...
+        Canary ELUsingAArch32.1 ELIsInHost.1 S1TranslationRegime.0 AArch64.TakeException.4 AArch64.UndefinedFault.0
+        Canary ELUsingAArch32.1 ELIsInHost.1 AArch64.TakeException.4 AArch64.UndefinedFault.0
+        Canary ELUsingAArch32.1 S1TranslationRegime.0 ESR[ AArch64.ReportException.2 AArch64.TakeException.4 AArch64.UndefinedFault.0
+        Canary ELUsingAArch32.1 S1TranslationRegime.0 AArch64.ReportException.2 AArch64.TakeException.4 AArch64.UndefinedFault.0
+        ...
+        Canary ELUsingAArch32.1 S1TranslationRegime.0 VBAR.read.0 AArch64.TakeException.4 AArch64.UndefinedFault.0
+        Canary ELUsingAArch32.1 S1TranslationRegime.0 AArch64.TakeException.4 AArch64.UndefinedFault.0
+        Canary ELUsingAArch32.1 AArch64.TakeException.4 AArch64.UndefinedFault.0
+
+    This shows that the final calls to ELUsingAArch32.1 are from ELIsInHost.1,
+    S1TranslationRegime.0 and AArch64.TakeException.  So we could choose to cut
+    all those functions.
+
+    It also shows that the root call to ELUsingAArch32.1 is
+    AArch64.UndefinedFault.0 so the easiest fix is to cut just that function.
 
 
 ## Currently implemented
@@ -147,3 +258,20 @@ unofficial ASL extension to declare a number the location of each field.
 The system register specification also contains a lot of information about
 how to refer to a system register, permission checking, constant value fields,
 etc. but none of that is being extracted at the moment.
+
+
+## Experimental parser, etc.
+
+There is an experimental parser for the language written in ocaml.
+This requires some tools to be installed.  The following instructions are for
+a Mac.
+
+    brew install ocaml opam
+    opam install menhir core
+
+Test it using the following
+
+    make test
+
+At the moment, all it does is parse the ASL code extracted from the XML files.
+It does not have a parser or typechecker.

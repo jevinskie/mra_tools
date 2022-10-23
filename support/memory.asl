@@ -14,26 +14,26 @@ __ResetMemoryState()
     __ExclusiveLocal = FALSE;
 
 __ELFWriteMemory(bits(64) address, bits(8) val)
-    __WriteRAM(52, 1, __Memory, address<0 +: 52>, val);
+    __WriteRAM(52, 1, __Memory, address[0 +: 52], val);
     return;
 
 bits(8*size) _Mem[AddressDescriptor desc, integer size, AccessDescriptor accdesc]
     assert size IN {1, 2, 4, 8, 16};
-    bits(52) address = desc.paddress.physicaladdress;
+    bits(52) address = desc.paddress.address;
     assert address == Align(address, size);
     return __ReadRAM(52, size, __Memory, address);
 
 _Mem[AddressDescriptor desc, integer size, AccessDescriptor accdesc] = bits(8*size) value
     assert size IN {1, 2, 4, 8, 16};
-    bits(52) address = desc.paddress.physicaladdress;
+    bits(52) address = desc.paddress.address;
     assert address == Align(address, size);
 
-    if address == 0x13000000<51:0> then // TUBE
+    if address == 0x13000000[51:0] then // TUBE
         if UInt(value) == 0x4 then
             print("Program exited by writing ^D to TUBE\n");
             __abort();
         else
-            putchar(UInt(value<7:0>));
+            putchar(UInt(value[7:0]));
     else
         __WriteRAM(52, size, __Memory, address, value);
     return;
@@ -64,7 +64,7 @@ AArch64.MarkExclusiveVA(bits(64) address, integer processorid, integer size)
     assert FALSE;
 
 ClearExclusiveByAddress(FullAddress paddress, integer processorid, integer size)
-    // assert FALSE;
+    assert TRUE; // todo
 
 bit ExclusiveMonitorsStatus()
     assert FALSE;
@@ -79,6 +79,30 @@ MarkExclusiveGlobal(FullAddress paddress, integer processorid, integer size)
 
 integer ProcessorID()
     return 0;
+
+bits(4) _MemTag[AddressDescriptor desc]
+    assert FALSE;
+    return Zeros(4);
+
+_MemTag[AddressDescriptor desc] = bits(4) value
+    assert FALSE;
+    return;
+
+boolean IsNonTagCheckedInstruction()
+    assert FALSE;
+    return FALSE;
+
+SetNotTagCheckedInstruction(boolean unchecked)
+    assert FALSE;
+    return;
+
+bits(4) _ChooseRandomNonExcludedTag(bits(16) exclude)
+    assert FALSE;
+    return Zeros(4);
+
+(bits(64), integer) ImpDefTagArrayStartAndCount(bits(64) address)
+    assert FALSE;
+    return (Zeros(64), 0);
 
 ////////////////////////////////////////////////////////////////
 // End
