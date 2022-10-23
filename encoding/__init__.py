@@ -85,7 +85,7 @@ def hex_str(n, length=None):
 class Encoding(object):
     '''Representation of a particular Instruction Encoding'''
 
-    def __init__(self, name, encoding_str, fields, ne_fields, form):
+    def __init__(self, name, encoding_str, fields, ne_fields, form, mnemonic):
         self.name = name
         if encoding_str[0] == 'T' and encoding_str[0] != 'A':
             self.thumb = True
@@ -102,6 +102,7 @@ class Encoding(object):
         self.fields = fields
         self.ne_fields = ne_fields
         self.form = form
+        self.mnemonic = mnemonic
 
     def __eq__(self, other):
         if isinstance(other, binary_type):
@@ -187,10 +188,10 @@ class Encoding(object):
         bitpattern_hex_str = hex_str(swap_endian(self.bitpattern(), self.length), length=self.length)
         ne_bitmask_hex_str = hex_str(swap_endian(self.ne_bitmask(), self.length), length=self.length)
         ne_bitpattern_hex_str = hex_str(swap_endian(self.ne_bitpattern(), self.length), length=self.length)
-        return "Enc[%s]{\n\tbitmask:\t%s\n\tbitpattern:\t%s\n\tne_bitmask:\t%s\n\t" \
+        return "Enc[%s aka %s]{\n\tbitmask:\t%s\n\tbitpattern:\t%s\n\tne_bitmask:\t%s\n\t" \
                "ne_bitpattern:\t%s\n\tthumb:\t%d\n\tlength:\t%d\n\t" \
                "fields:\t%s\n\tne_fields:\t%s\n\tform:\t%s}" % \
-               (self.name, bitmask_hex_str, bitpattern_hex_str, \
+               (self.name, self.mnemonic, bitmask_hex_str, bitpattern_hex_str, \
                 ne_bitmask_hex_str, ne_bitpattern_hex_str, self.thumb, \
                 self.length, self.fields, self.ne_fields, self.form)
 

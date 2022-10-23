@@ -54,7 +54,8 @@ class Instruction(object):
             fields = tuple(enc[2])
             ne_fields = tuple(enc[3])
             form = enc[4]
-            self.enc_objs.append(encoding.Encoding(name, encoding_str, fields, ne_fields, form))
+            mnemonic = enc[5]
+            self.enc_objs.append(encoding.Encoding(name, encoding_str, fields, ne_fields, form, mnemonic))
         self.enc_objs = tuple(self.enc_objs)
 
     def __repr__(self):
@@ -80,6 +81,11 @@ def readASLName(ps):
 
     return name
 
+def getMnemonic(docvars):
+    for dv in docvars:
+        if dv.attrib['key'] == 'mnemonic':
+            return dv.attrib['value']
+    return None
 
 def readInstruction(xml):
     execs = xml.findall(".//pstext[@section='Execute']/..")
@@ -143,9 +149,10 @@ def readInstruction(xml):
             fields2.append((hi, lo, nm, split, consts))
 
         dec_asl_name = readASLName(iclass.find('ps_section/ps'))
+        mnemonic = getMnemonic(iclass.find('encoding/docvars'))
 
         name = dec_asl_name if insn_set in ['T16', 'T32', 'A32'] else encoding.attrib['psname']
-        encs.append((name, insn_set, fields2, ne_fields, form))
+        encs.append((name, insn_set, fields2, ne_fields, form, mnemonic))
 
     return Instruction(exec_name, encs)
 
@@ -195,7 +202,7 @@ def main():
     parser.add_argument('--verbose', '-v', help='Use verbose output',
                         action='count', default=0)
     parser.add_argument('dir', metavar='<dir>', nargs='*',
-                        default=['v8.6/ISA_A64_xml_v86A-2019-12'], help='input directories')
+                        default=['v8.6/ISA_A64_xml_v86A-2019-12_OPT'], help='input directories')
     parser.add_argument('--arch', help='Optional list of architecture states to extract',
                         choices=['AArch32', 'AArch64'], action='append')
     parser.add_argument('--output',  '-o', help='File to store pickled encodings',
