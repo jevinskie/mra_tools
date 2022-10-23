@@ -194,7 +194,7 @@ def main():
     parser.add_argument('--verbose', '-v', help='Use verbose output',
                         action='count', default=0)
     parser.add_argument('dir', metavar='<dir>', nargs='*',
-                        default=['v8.3/ISA_v83A_AArch32_xml_00bet4', 'v8.3/ISA_v83A_A64_xml_00bet4'], help='input directories')
+                        default=['v8.3/ISA_v83A_A64_xml_00bet4'], help='input directories')
     parser.add_argument('--arch', help='Optional list of architecture states to extract',
                         choices=['AArch32', 'AArch64'], action='append')
     parser.add_argument('--output',  '-o', help='File to store pickled encodings',

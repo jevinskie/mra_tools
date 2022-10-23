@@ -71,9 +71,9 @@ def hex_str(n, length=None):
         for _ in range(length):
             hex_strs.append('%02X' % (n & 0xFF))
             n >>= 8
-        return ' '.join(hex_strs)
+        return ''.join(hex_strs)
     elif isinstance(n, binary_type):
-        return ' '.join(['%02X' % b for b in bytes(n)])
+        return ''.join(['%02X' % b for b in bytes(n)])
     else:
         raise ValueError('Bad type: %s' % type(n))
 
