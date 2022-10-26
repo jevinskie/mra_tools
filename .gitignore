@@ -3,15 +3,12 @@
 *.tar.gz
 
 # ASL files
-regs.asl
-arch.asl
-arch.tag
+arch/
 
 # Vim files
 *.swp
 *.un~
 *.swo
-<<<<<<< HEAD
 
 # Python files
 *.pyc
