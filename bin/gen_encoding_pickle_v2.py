@@ -13,6 +13,7 @@ import sys
 sys.path.append(str((Path(__file__).parent / "..").resolve()))
 
 import encoding
+from instrs2asl import *
 
 instr_dill_path = (Path(__file__).parent / "../encoding/instr_encodings.pickle").resolve()
 
@@ -20,7 +21,7 @@ instr_dill_path = (Path(__file__).parent / "../encoding/instr_encodings.pickle")
 def real_main(args):
     print("Writing pickled encodings to '{args.output}'" % args.output)
     with open(args.output, "wb") as outfile:
-        pickle.dump(g_instrs_enc_objs, outfile, protocol=2)
+        pickle.dump(object(), outfile, protocol=2)
 
 
 def get_arg_parser() -> argparse.ArgumentParser:
