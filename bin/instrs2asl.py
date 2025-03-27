@@ -403,7 +403,8 @@ def readITables(dir, root):
                     nop      = r.get('reserved_nop_hint', '0') == '1'
                     encname  = r.get('encname')
                     nm       = "_" if undef or unpred or nop else readInstrName(dir, r.attrib['iformfile'], encname)
-                    rows.append((patterns, nm, encname, undef, unpred, nop))
+                    mnenomic = [ d.text for d in r.findall('td') if d.attrib['class'] == 'iformname' ][0]
+                    rows.append((patterns, nm, encname, undef, unpred, nop, mnenomic))
                 tables.append((iclass, headers, rows))
                 # print(iclass, fields, headers, rows)
             assert len(tables) == 1
